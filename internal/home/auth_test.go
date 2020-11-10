@@ -36,7 +36,10 @@ func TestAuth(t *testing.T) {
 	assert.True(t, a.CheckSession("notfound") == -1)
 	a.RemoveSession("notfound")
 
-	sess := getSession(&users[0])
+	sess, err := getSession(&users[0])
+	if err != nil {
+		panic(err)
+	}
 	sessStr := hex.EncodeToString(sess)
 
 	now := time.Now().UTC().Unix()
@@ -85,9 +88,11 @@ type testResponseWriter struct {
 func (w *testResponseWriter) Header() http.Header {
 	return w.hdr
 }
+
 func (w *testResponseWriter) Write([]byte) (int, error) {
 	return 0, nil
 }
+
 func (w *testResponseWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
 }
@@ -129,7 +134,10 @@ func TestAuthHTTP(t *testing.T) {
 	assert.True(t, handlerCalled)
 
 	// perform login
-	cookie := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	cookie, err := Context.auth.httpCookie(loginJSON{Name: "name", Password: "password"})
+	if err != nil {
+		panic(err)
+	}
 	assert.True(t, cookie != "")
 
 	// get /

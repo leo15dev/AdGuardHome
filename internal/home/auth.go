@@ -1,12 +1,13 @@
 package home
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"strings"
 	"sync"
@@ -76,7 +77,6 @@ func InitAuth(dbFilename string, users []User, sessionTTL uint32) *Auth {
 	a := Auth{}
 	a.sessionTTL = sessionTTL
 	a.sessions = make(map[string]*session)
-	rand.Seed(time.Now().UTC().Unix())
 	var err error
 	a.db, err = bbolt.Open(dbFilename, 0o644, nil)
 	if err != nil {
@@ -275,23 +275,28 @@ type loginJSON struct {
 	Password string `json:"password"`
 }
 
-func getSession(u *User) []byte {
-	// the developers don't currently believe that using a
-	// non-cryptographic RNG for the session hash salt is
-	// insecure
-	salt := rand.Uint32() //nolint:gosec
-	d := []byte(fmt.Sprintf("%d%s%s", salt, u.Name, u.PasswordHash))
-	hash := sha256.Sum256(d)
-	return hash[:]
-}
-
-func (a *Auth) httpCookie(req loginJSON) string {
-	u := a.UserFind(req.Name, req.Password)
-	if len(u.Name) == 0 {
-		return ""
+func getSession(u *User) ([]byte, error) {
+	maxSalt := big.NewInt(big.MaxPrec)
+	salt, err := rand.Int(rand.Reader, maxSalt)
+	if err != nil {
+		return nil, err
 	}
 
-	sess := getSession(&u)
+	d := []byte(fmt.Sprintf("%s%s%s", salt, u.Name, u.PasswordHash))
+	hash := sha256.Sum256(d)
+	return hash[:], nil
+}
+
+func (a *Auth) httpCookie(req loginJSON) (string, error) {
+	u := a.UserFind(req.Name, req.Password)
+	if len(u.Name) == 0 {
+		return "", nil
+	}
+
+	sess, err := getSession(&u)
+	if err != nil {
+		return "", err
+	}
 
 	now := time.Now().UTC()
 	expire := now.Add(cookieTTL * time.Hour)
@@ -305,7 +310,7 @@ func (a *Auth) httpCookie(req loginJSON) string {
 	a.addSession(sess, &s)
 
 	return fmt.Sprintf("%s=%s; Path=/; HttpOnly; Expires=%s",
-		sessionCookieName, hex.EncodeToString(sess), expstr)
+		sessionCookieName, hex.EncodeToString(sess), expstr), nil
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -316,7 +321,11 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := Context.auth.httpCookie(req)
+	cookie, err := Context.auth.httpCookie(req)
+	if err != nil {
+		httpError(w, http.StatusBadRequest, "crypto rand reader: %s", err)
+		return
+	}
 	if len(cookie) == 0 {
 		log.Info("Auth: invalid user name or password: name=%q", req.Name)
 		time.Sleep(1 * time.Second)

@@ -182,7 +182,7 @@ func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := dnsConfig{}
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&req); err != nil {
-		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+		httpError(r, w, http.StatusBadRequest, "json Encode: %s", err)
 		return
 	}
 
