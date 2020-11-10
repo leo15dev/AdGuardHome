@@ -144,28 +144,7 @@ func version() string {
 	return fmt.Sprintf(msg, versionString, updateChannel, runtime.GOOS, runtime.GOARCH)
 }
 
-// run initializes configuration and runs the AdGuard Home
-// run is a blocking method!
-// nolint
-func run(args options) {
-	// configure config filename
-	initConfigFilename(args)
-
-	// configure working dir and config path
-	initWorkingDir(args)
-
-	// configure log level and output
-	configureLogger(args)
-
-	// Go memory hacks
-	memoryUsage(args)
-
-	// print the first message after logger is configured
-	log.Println(version())
-	log.Debug("Current working directory is %s", Context.workDir)
-	if args.runningAsService {
-		log.Info("AdGuard Home is running as a service")
-	}
+func setupContext(args options) {
 	Context.runningAsService = args.runningAsService
 	Context.disableUpdate = args.disableUpdate
 
@@ -183,7 +162,8 @@ func run(args options) {
 		DialContext: customDialContext,
 		Proxy:       getHTTPProxy,
 		TLSClientConfig: &tls.Config{
-			RootCAs: Context.tlsRoots,
+			RootCAs:    Context.tlsRoots,
+			MinVersion: tls.VersionTLS12,
 		},
 	}
 	Context.client = &http.Client{
@@ -209,12 +189,9 @@ func run(args options) {
 			os.Exit(0)
 		}
 	}
+}
 
-	// 'clients' module uses 'dnsfilter' module's static data (dnsfilter.BlockedSvcKnown()),
-	//  so we have to initialize dnsfilter's static data first,
-	//  but also avoid relying on automatic Go init() function
-	dnsfilter.InitModule()
-
+func setupConfig(args options) {
 	config.DHCP.WorkDir = Context.workDir
 	config.DHCP.HTTPRegister = httpRegister
 	config.DHCP.ConfigModified = onConfigModified
@@ -255,6 +232,38 @@ func run(args options) {
 	if len(args.pidFile) != 0 && writePIDFile(args.pidFile) {
 		Context.pidFileName = args.pidFile
 	}
+}
+
+// run initializes configuration and runs the AdGuard Home
+// run is a blocking method!
+func run(args options) {
+	// configure config filename
+	initConfigFilename(args)
+
+	// configure working dir and config path
+	initWorkingDir(args)
+
+	// configure log level and output
+	configureLogger(args)
+
+	// Go memory hacks
+	memoryUsage(args)
+
+	// print the first message after logger is configured
+	log.Println(version())
+	log.Debug("Current working directory is %s", Context.workDir)
+	if args.runningAsService {
+		log.Info("AdGuard Home is running as a service")
+	}
+
+	setupContext(args)
+
+	// 'clients' module uses 'dnsfilter' module's static data (dnsfilter.BlockedSvcKnown()),
+	//  so we have to initialize dnsfilter's static data first,
+	//  but also avoid relying on automatic Go init() function
+	dnsfilter.InitModule()
+
+	setupConfig(args)
 
 	if !Context.firstRun {
 		// Save the updated config
