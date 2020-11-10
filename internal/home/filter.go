@@ -497,7 +497,54 @@ func (f *Filtering) update(filter *filter) (bool, error) {
 	return b, err
 }
 
-// nolint(gocyclo)
+func (f *Filtering) read(reader io.Reader, tmpFile *os.File, filter *filter) (int, error) {
+	htmlTest := true
+	firstChunk := make([]byte, 4*1024)
+	firstChunkLen := 0
+	buf := make([]byte, 64*1024)
+	total := 0
+	for {
+		n, err := reader.Read(buf)
+		total += n
+
+		if htmlTest {
+			num := len(firstChunk) - firstChunkLen
+			if n < num {
+				num = n
+			}
+			copied := copy(firstChunk[firstChunkLen:], buf[:num])
+			firstChunkLen += copied
+
+			if firstChunkLen == len(firstChunk) || err == io.EOF {
+				if !isPrintableText(firstChunk, firstChunkLen) {
+					return total, fmt.Errorf("data contains non-printable characters")
+				}
+
+				s := strings.ToLower(string(firstChunk))
+				if strings.Contains(s, "<html") || strings.Contains(s, "<!doctype") {
+					return total, fmt.Errorf("data is HTML, not plain text")
+				}
+
+				htmlTest = false
+				firstChunk = nil
+			}
+		}
+
+		_, err2 := tmpFile.Write(buf[:n])
+		if err2 != nil {
+			return total, err2
+		}
+
+		if err == io.EOF {
+			return total, nil
+		}
+		if err != nil {
+			log.Printf("Couldn't fetch filter contents from URL %s, skipping: %s", filter.URL, err)
+			return total, err
+		}
+	}
+}
+
 func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
@@ -537,50 +584,9 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 		reader = resp.Body
 	}
 
-	htmlTest := true
-	firstChunk := make([]byte, 4*1024)
-	firstChunkLen := 0
-	buf := make([]byte, 64*1024)
-	total := 0
-	for {
-		n, err := reader.Read(buf)
-		total += n
-
-		if htmlTest {
-			num := len(firstChunk) - firstChunkLen
-			if n < num {
-				num = n
-			}
-			copied := copy(firstChunk[firstChunkLen:], buf[:num])
-			firstChunkLen += copied
-
-			if firstChunkLen == len(firstChunk) || err == io.EOF {
-				if !isPrintableText(firstChunk, firstChunkLen) {
-					return false, fmt.Errorf("data contains non-printable characters")
-				}
-
-				s := strings.ToLower(string(firstChunk))
-				if strings.Contains(s, "<html") || strings.Contains(s, "<!doctype") {
-					return false, fmt.Errorf("data is HTML, not plain text")
-				}
-
-				htmlTest = false
-				firstChunk = nil
-			}
-		}
-
-		_, err2 := tmpFile.Write(buf[:n])
-		if err2 != nil {
-			return false, err2
-		}
-
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Printf("Couldn't fetch filter contents from URL %s, skipping: %s", filter.URL, err)
-			return false, err
-		}
+	total, err := f.read(reader, tmpFile, filter)
+	if err != nil {
+		return false, err
 	}
 
 	// Extract filter name and count number of rules
