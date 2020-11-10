@@ -71,7 +71,7 @@ func (c *sbCtx) setCache(prefix, hashes []byte) {
 	log.Debug("%s: stored in cache: %v", c.svc, prefix)
 }
 
-func (c *sbCtx) incapsulated(val []byte, now int64) int {
+func (c *sbCtx) expirence(val []byte, now int64) int {
 	expire := binary.BigEndian.Uint32(val)
 	if now >= int64(expire) {
 		val = nil
@@ -96,7 +96,7 @@ func (c *sbCtx) getCached() int {
 	for k, v := range c.hashToHost {
 		key := k[0:2]
 		val := c.cache.Get(key)
-		if val != nil && c.incapsulated(val, now) == 1 {
+		if val != nil && c.expirence(val, now) == 1 {
 			return 1
 		}
 		if val == nil {
@@ -293,18 +293,18 @@ func (d *Dnsfilter) checkSafeBrowsing(host string) (Result, error) {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("SafeBrowsing lookup for %s", host)
 	}
-	c := &sbCtx{
+	ctx := &sbCtx{
 		host:      host,
 		svc:       "SafeBrowsing",
 		cache:     gctx.safebrowsingCache,
 		cacheTime: d.Config.CacheTime,
 	}
-	r := Result{
+	res := Result{
 		IsFiltered: true,
 		Reason:     FilteredSafeBrowsing,
 		Rule:       "adguard-malware-shavar",
 	}
-	return check(c, r, d.safeBrowsingUpstream)
+	return check(ctx, res, d.safeBrowsingUpstream)
 }
 
 func (d *Dnsfilter) checkParental(host string) (Result, error) {
@@ -312,18 +312,18 @@ func (d *Dnsfilter) checkParental(host string) (Result, error) {
 		timer := log.StartTimer()
 		defer timer.LogElapsed("Parental lookup for %s", host)
 	}
-	c := &sbCtx{
+	ctx := &sbCtx{
 		host:      host,
 		svc:       "Parental",
 		cache:     gctx.parentalCache,
 		cacheTime: d.Config.CacheTime,
 	}
-	r := Result{
+	res := Result{
 		IsFiltered: true,
 		Reason:     FilteredParental,
 		Rule:       "parental CATEGORY_BLACKLISTED",
 	}
-	return check(c, r, d.parentalUpstream)
+	return check(ctx, res, d.parentalUpstream)
 }
 
 func httpError(r *http.Request, w http.ResponseWriter, code int, format string, args ...interface{}) {
