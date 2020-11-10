@@ -67,6 +67,8 @@ type homeContext struct {
 	autoHosts  util.AutoHosts       // IP-hostname pairs taken from system configuration (e.g. /etc/hosts) files
 	updater    *update.Updater
 
+	ipDetector *ipDetector
+
 	// Runtime properties
 	// --
 
@@ -322,6 +324,11 @@ func run(args options) {
 		if Context.dhcpServer != nil {
 			_ = Context.dhcpServer.Start()
 		}
+	}
+
+	Context.ipDetector, err = newIPDetector()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	Context.web.Start()

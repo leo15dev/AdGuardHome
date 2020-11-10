@@ -369,7 +369,53 @@ func parseCookie(cookie string) string {
 	return ""
 }
 
-// nolint(gocyclo)
+func optionalAuthThird(w http.ResponseWriter, r *http.Request) (returns bool) {
+	returns = false
+
+	// redirect to login page if not authenticated
+	ok := false
+	cookie, err := r.Cookie(sessionCookieName)
+
+	if glProcessCookie(r) {
+		log.Debug("Auth: authentification was handled by GL-Inet submodule")
+		ok = true
+
+	} else if err == nil {
+		r := Context.auth.CheckSession(cookie.Value)
+		if r == 0 {
+			ok = true
+		} else if r < 0 {
+			log.Debug("Auth: invalid cookie value: %s", cookie)
+		}
+	} else {
+		// there's no Cookie, check Basic authentication
+		user, pass, ok2 := r.BasicAuth()
+		if ok2 {
+			u := Context.auth.UserFind(user, pass)
+			if len(u.Name) != 0 {
+				ok = true
+			} else {
+				log.Info("Auth: invalid Basic Authorization value")
+			}
+		}
+	}
+	if !ok {
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+			if glProcessRedirect(w, r) {
+				log.Debug("Auth: redirected to login page by GL-Inet submodule")
+			} else {
+				w.Header().Set("Location", "/login.html")
+				w.WriteHeader(http.StatusFound)
+			}
+		} else {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte("Forbidden"))
+		}
+		returns = true
+	}
+	return
+}
+
 func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/login.html" {
@@ -392,45 +438,7 @@ func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.Re
 			// process as usual
 			// no additional auth requirements
 		} else if Context.auth != nil && Context.auth.AuthRequired() {
-			// redirect to login page if not authenticated
-			ok := false
-			cookie, err := r.Cookie(sessionCookieName)
-
-			if glProcessCookie(r) {
-				log.Debug("Auth: authentification was handled by GL-Inet submodule")
-				ok = true
-
-			} else if err == nil {
-				r := Context.auth.CheckSession(cookie.Value)
-				if r == 0 {
-					ok = true
-				} else if r < 0 {
-					log.Debug("Auth: invalid cookie value: %s", cookie)
-				}
-			} else {
-				// there's no Cookie, check Basic authentication
-				user, pass, ok2 := r.BasicAuth()
-				if ok2 {
-					u := Context.auth.UserFind(user, pass)
-					if len(u.Name) != 0 {
-						ok = true
-					} else {
-						log.Info("Auth: invalid Basic Authorization value")
-					}
-				}
-			}
-			if !ok {
-				if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-					if glProcessRedirect(w, r) {
-						log.Debug("Auth: redirected to login page by GL-Inet submodule")
-					} else {
-						w.Header().Set("Location", "/login.html")
-						w.WriteHeader(http.StatusFound)
-					}
-				} else {
-					w.WriteHeader(http.StatusForbidden)
-					_, _ = w.Write([]byte("Forbidden"))
-				}
+			if optionalAuthThird(w, r) {
 				return
 			}
 		}

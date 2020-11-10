@@ -107,6 +107,27 @@ func checkBootstrap(addr string) error {
 	return nil
 }
 
+// func (s *Server) handleSetConfig1(w http.ResponseWriter, r *http.Request) {
+// 	req := dnsConfigJSON{}
+// 	dec := json.NewDecoder(r.Body)
+// 	if err := dec.Decode(&req); err != nil {
+// 		httpError(r, w, http.StatusBadRequest, "json.Decode: %s", err)
+// 		return
+// 	}
+
+// 	if err := ValidateUpstreams(req.Upstreams); err != nil {
+// 		httpError(r, w, http.StatusBadRequest, "wrong upstreams specification: %s", err)
+// 		return
+// 	}
+
+// 	for _, boot := range req.Bootstraps {
+// 		if err := checkBootstrap(boot); err != nil {
+// 			httpError(r, w, http.StatusBadRequest, "%s can not be used as bootstrap dns cause: %s", boot, err)
+// 			return
+// 		}
+// 	}
+// }
+
 // nolint(gocyclo) - we need to check each JSON field separately
 func (s *Server) handleSetConfig(w http.ResponseWriter, r *http.Request) {
 	req := dnsConfigJSON{}
