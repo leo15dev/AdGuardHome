@@ -202,11 +202,7 @@ func decodeLogEntry(ent *logEntry, str string) {
 		if _, ok := keyToken.(json.Delim); ok {
 			continue
 		}
-		key, ok := keyToken.(string)
-		if !ok {
-			log.Debug("json key wrong type")
-			return
-		}
+		key := keyToken.(string)
 		handler, ok := logEntryHandlers[key]
 		if !ok {
 			log.Debug("bad json key")
