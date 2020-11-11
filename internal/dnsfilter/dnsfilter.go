@@ -177,7 +177,7 @@ func (r Reason) String() string {
 	return reasonNames[r]
 }
 
-// In returns true if list includes reason.
+// In returns true if reasons include r.
 func (r Reason) In(reasons ...Reason) bool {
 	for _, reason := range reasons {
 		if r == reason {

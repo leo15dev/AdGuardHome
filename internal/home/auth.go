@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/big"
 	"net/http"
 	"strings"
@@ -276,7 +277,7 @@ type loginJSON struct {
 }
 
 func getSession(u *User) ([]byte, error) {
-	maxSalt := big.NewInt(big.MaxPrec)
+	maxSalt := big.NewInt(math.MaxUint32)
 	salt, err := rand.Int(rand.Reader, maxSalt)
 	if err != nil {
 		return nil, err

@@ -8,10 +8,13 @@ import (
 )
 
 func TestIPDetector_detectSpecialNetwork(t *testing.T) {
-	ipd, err := newIPDetector()
-	if err != nil {
-		panic(err)
-	}
+	var ipd *ipDetector
+
+	t.Run("newIPDetector", func(t *testing.T) {
+		var err error
+		ipd, err = newIPDetector()
+		assert.Nil(t, err)
+	})
 
 	testCases := []struct {
 		name string

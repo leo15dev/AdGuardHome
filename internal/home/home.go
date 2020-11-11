@@ -234,8 +234,7 @@ func setupConfig(args options) {
 	}
 }
 
-// run initializes configuration and runs the AdGuard Home
-// run is a blocking method!
+// run performs configurating and starts the AdGuard Home.
 func run(args options) {
 	// configure config filename
 	initConfigFilename(args)

@@ -71,23 +71,20 @@ func (c *sbCtx) setCache(prefix, hashes []byte) {
 	log.Debug("%s: stored in cache: %v", c.svc, prefix)
 }
 
-func (c *sbCtx) expirence(val []byte, now int64) int {
-	expire := binary.BigEndian.Uint32(val)
-	if now >= int64(expire) {
-		val = nil
-	} else {
-		for i := 4; i < len(val); i += 32 {
-			hash := val[i : i+32]
-			var hash32 [32]byte
-			copy(hash32[:], hash[0:32])
-			_, found := c.hashToHost[hash32]
-			if found {
-				log.Debug("%s: found in cache: %s: blocked by %v", c.svc, c.host, hash32)
-				return 1
-			}
+// findInHash returns 32-byte hash if it's found in hashToHost.
+func (c *sbCtx) findInHash(val []byte) (hash32 [32]byte, found bool) {
+	for i := 4; i < len(val); i += 32 {
+		hash := val[i : i+32]
+
+		copy(hash32[:], hash[0:32])
+
+		_, found = c.hashToHost[hash32]
+		if found {
+			return hash32, found
 		}
 	}
-	return 0
+
+	return [32]byte{}, false
 }
 
 func (c *sbCtx) getCached() int {
@@ -96,11 +93,17 @@ func (c *sbCtx) getCached() int {
 	for k, v := range c.hashToHost {
 		key := k[0:2]
 		val := c.cache.Get(key)
-		if val != nil && c.expirence(val, now) == 1 {
-			return 1
-		}
+
 		if val == nil {
 			hashesToRequest[k] = v
+			continue
+		}
+
+		if exp := binary.BigEndian.Uint32(val); now < int64(exp) {
+			if hash32, found := c.findInHash(val); found {
+				log.Debug("%s: found in cache: %s: blocked by %v", c.svc, c.host, hash32)
+				return 1
+			}
 		}
 	}
 

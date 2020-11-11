@@ -6,6 +6,7 @@ import (
 	"hash/crc32"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -554,8 +555,14 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	}
 	defer func() {
 		if tmpFile != nil {
-			_ = tmpFile.Close()
-			_ = os.Remove(tmpFile.Name())
+			if err := tmpFile.Close(); err != nil {
+				log.Printf("Couldn't close temporary file: %s", err)
+			}
+			tmpFileName := tmpFile.Name()
+			if err := os.Remove(tmpFileName); err != nil {
+				log.Printf("Couldn't delete temporary file %s: %s", tmpFileName, err)
+			}
+
 		}
 	}()
 
@@ -577,7 +584,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 			return false, err
 		}
 
-		if resp.StatusCode != 200 {
+		if resp.StatusCode != http.StatusOK {
 			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
 			return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
 		}
