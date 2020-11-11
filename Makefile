@@ -33,6 +33,7 @@ BASE_URL="https://static.adguard.com/adguardhome/$(CHANNEL)"
 GPG_KEY := devteam@adguard.com
 GPG_KEY_PASSPHRASE :=
 GPG_CMD := gpg --detach-sig --default-key $(GPG_KEY) --pinentry-mode loopback --passphrase $(GPG_KEY_PASSPHRASE)
+VERBOSE = -v
 
 # See release target
 DIST_DIR=dist
@@ -109,7 +110,7 @@ $(error DOCKER_IMAGE_NAME value is not set)
 endif
 
 # OS-specific flags
-TEST_FLAGS := --race -v
+TEST_FLAGS := --race $(VERBOSE)
 ifeq ($(OS),Windows_NT)
 	TEST_FLAGS :=
 endif
