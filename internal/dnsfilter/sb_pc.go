@@ -93,17 +93,13 @@ func (c *sbCtx) getCached() int {
 	for k, v := range c.hashToHost {
 		key := k[0:2]
 		val := c.cache.Get(key)
-
-		if val == nil {
+		if val == nil || now >= int64(binary.BigEndian.Uint32(val)) {
 			hashesToRequest[k] = v
 			continue
 		}
-
-		if exp := binary.BigEndian.Uint32(val); now < int64(exp) {
-			if hash32, found := c.findInHash(val); found {
-				log.Debug("%s: found in cache: %s: blocked by %v", c.svc, c.host, hash32)
-				return 1
-			}
+		if hash32, found := c.findInHash(val); found {
+			log.Debug("%s: found in cache: %s: blocked by %v", c.svc, c.host, hash32)
+			return 1
 		}
 	}
 
