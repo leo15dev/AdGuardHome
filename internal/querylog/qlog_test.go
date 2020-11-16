@@ -8,9 +8,14 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxyutil"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsfilter"
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 func prepareTestDir() string {
 	const dir = "./agh-test"
@@ -226,13 +231,20 @@ func addEntry(l *queryLog, host, answerStr, client string) {
 	}
 	answer.A = net.ParseIP(answerStr)
 	a.Answer = append(a.Answer, answer)
-	res := dnsfilter.Result{}
+	res := dnsfilter.Result{
+		IsFiltered:  true,
+		Rule:        "SomeRule",
+		Reason:      dnsfilter.ReasonRewrite,
+		ServiceName: "SomeService",
+		FilterID:    1,
+	}
 	params := AddParams{
-		Question: &q,
-		Answer:   &a,
-		Result:   &res,
-		ClientIP: net.ParseIP(client),
-		Upstream: "upstream",
+		Question:   &q,
+		Answer:     &a,
+		OrigAnswer: &a,
+		Result:     &res,
+		ClientIP:   net.ParseIP(client),
+		Upstream:   "upstream",
 	}
 	l.Add(params)
 }

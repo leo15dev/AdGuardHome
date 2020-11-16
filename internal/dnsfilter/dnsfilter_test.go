@@ -1,14 +1,22 @@
 package dnsfilter
 
 import (
+	"bytes"
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/testutil"
+	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	testutil.DiscardLogOutput(m)
+}
 
 var setts RequestFilteringSettings
 
@@ -137,10 +145,17 @@ func TestEtcHostsMatching(t *testing.T) {
 // SAFE BROWSING
 
 func TestSafeBrowsing(t *testing.T) {
+	logOutput := &bytes.Buffer{}
+	testutil.ReplaceLogWriter(t, logOutput)
+	testutil.ReplaceLogLevel(t, log.DEBUG)
+
 	d := NewForTest(&Config{SafeBrowsingEnabled: true}, nil)
 	defer d.Close()
 	gctx.stats.Safebrowsing.Requests = 0
 	d.checkMatch(t, "wmconvirus.narod.ru")
+
+	assert.True(t, strings.Contains(logOutput.String(), "SafeBrowsing lookup for wmconvirus.narod.ru"))
+
 	d.checkMatch(t, "test.wmconvirus.narod.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
 	d.checkMatchEmpty(t, "pornhub.com")
@@ -290,7 +305,6 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 		t.Fatalf("Failed to lookup for %s", safeDomain)
 	}
 
-	t.Logf("IP addresses: %v", ips)
 	ip := ips[0]
 	for _, i := range ips {
 		if i.To4() != nil {
@@ -324,9 +338,14 @@ func TestSafeSearchCacheGoogle(t *testing.T) {
 // PARENTAL
 
 func TestParentalControl(t *testing.T) {
+	logOutput := &bytes.Buffer{}
+	testutil.ReplaceLogWriter(t, logOutput)
+	testutil.ReplaceLogLevel(t, log.DEBUG)
+
 	d := NewForTest(&Config{ParentalEnabled: true}, nil)
 	defer d.Close()
 	d.checkMatch(t, "pornhub.com")
+	assert.True(t, strings.Contains(logOutput.String(), "Parental lookup for pornhub.com"))
 	d.checkMatch(t, "www.pornhub.com")
 	d.checkMatchEmpty(t, "www.yandex.ru")
 	d.checkMatchEmpty(t, "yandex.ru")
