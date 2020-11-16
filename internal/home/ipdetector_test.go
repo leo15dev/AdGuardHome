@@ -21,107 +21,107 @@ func TestIPDetector_detectSpecialNetwork(t *testing.T) {
 		ip   net.IP
 		want bool
 	}{{
-		name: "Not specific",
+		name: "not_specific",
 		ip:   net.ParseIP("8.8.8.8"),
 		want: false,
 	}, {
-		name: "This host on this network",
+		name: "this_host_on_this_network",
 		ip:   net.ParseIP("0.0.0.0"),
 		want: true,
 	}, {
-		name: "Private-Use",
+		name: "private-Use",
 		ip:   net.ParseIP("10.0.0.0"),
 		want: true,
 	}, {
-		name: "Shared Address Space",
+		name: "shared_address_space",
 		ip:   net.ParseIP("100.64.0.0"),
 		want: true,
 	}, {
-		name: "Loopback",
+		name: "loopback",
 		ip:   net.ParseIP("127.0.0.0"),
 		want: true,
 	}, {
-		name: "Link Local",
+		name: "link_local",
 		ip:   net.ParseIP("169.254.0.0"),
 		want: true,
 	}, {
-		name: "Private-Use",
+		name: "private-use",
 		ip:   net.ParseIP("172.16.0.0"),
 		want: true,
 	}, {
-		name: "IETF Protocol Assignments",
+		name: "ietf_protocol_assignments",
 		ip:   net.ParseIP("192.0.0.0"),
 		want: true,
 	}, {
-		name: "DS-Lite",
+		name: "ds-lite",
 		ip:   net.ParseIP("192.0.0.0"),
 		want: true,
 	}, {
-		name: "Documentation (TEST-NET-1)",
+		name: "documentation_(test-net-1)",
 		ip:   net.ParseIP("192.0.2.0"),
 		want: true,
 	}, {
-		name: "6to4 Relay Anycast",
+		name: "6to4_relay_anycast",
 		ip:   net.ParseIP("192.88.99.0"),
 		want: true,
 	}, {
-		name: "Private-Use",
+		name: "private-use",
 		ip:   net.ParseIP("192.168.0.0"),
 		want: true,
 	}, {
-		name: "Benchmarking",
+		name: "benchmarking",
 		ip:   net.ParseIP("198.18.0.0"),
 		want: true,
 	}, {
-		name: "Documentation (TEST-NET-2)",
+		name: "documentation_(test-net-2)",
 		ip:   net.ParseIP("198.51.100.0"),
 		want: true,
 	}, {
-		name: "Documentation (TEST-NET-3)",
+		name: "documentation_(test-net-3)",
 		ip:   net.ParseIP("203.0.113.0"),
 		want: true,
 	}, {
-		name: "Reserved",
+		name: "reserved",
 		ip:   net.ParseIP("240.0.0.0"),
 		want: true,
 	}, {
-		name: "Limited Broadcast",
+		name: "limited_broadcast",
 		ip:   net.ParseIP("255.255.255.255"),
 		want: true,
 	}, {
-		name: "Loopback Address",
+		name: "loopback_address",
 		ip:   net.ParseIP("::1"),
 		want: true,
 	}, {
-		name: "Unspecified Address",
+		name: "unspecified_address",
 		ip:   net.ParseIP("::"),
 		want: true,
 	}, {
-		name: "IPv4-IPv6 Translat.",
+		name: "ipv4-ipv6_translation",
 		ip:   net.ParseIP("64:ff9b::"),
 		want: true,
 	}, {
-		name: "Discard-Only Address Block",
+		name: "discard-only_address_block",
 		ip:   net.ParseIP("100::"),
 		want: true,
 	}, {
-		name: "IETF Protocol Assignments",
+		name: "ietf_protocol_assignments",
 		ip:   net.ParseIP("2001::"),
 		want: true,
 	}, {
-		name: "TEREDO",
+		name: "teredo",
 		ip:   net.ParseIP("2001::"),
 		want: true,
 	}, {
-		name: "Benchmarking",
+		name: "benchmarking",
 		ip:   net.ParseIP("2001:2::"),
 		want: true,
 	}, {
-		name: "Documentation",
+		name: "documentation",
 		ip:   net.ParseIP("2001:db8::"),
 		want: true,
 	}, {
-		name: "ORCHID",
+		name: "orchid",
 		ip:   net.ParseIP("2001:10::"),
 		want: true,
 	}, {
@@ -129,11 +129,11 @@ func TestIPDetector_detectSpecialNetwork(t *testing.T) {
 		ip:   net.ParseIP("2002::"),
 		want: true,
 	}, {
-		name: "Unique-Local",
+		name: "unique-local",
 		ip:   net.ParseIP("fc00::"),
 		want: true,
 	}, {
-		name: "Linked-Scoped Unicast",
+		name: "linked-scoped_unicast",
 		ip:   net.ParseIP("fe80::"),
 		want: true,
 	}}
