@@ -3,7 +3,6 @@ package querylog
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +16,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"IP": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		if len(ent.IP) == 0 {
 			ent.IP = v
@@ -27,7 +26,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"T": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		var err error
 		ent.Time, err = time.Parse(time.RFC3339, v)
@@ -36,7 +35,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"QH": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		ent.QHost = v
 		return nil
@@ -44,7 +43,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"QT": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		ent.QType = v
 		return nil
@@ -52,7 +51,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"QC": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		ent.QClass = v
 		return nil
@@ -60,7 +59,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"CP": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		var err error
 		ent.ClientProto, err = NewClientProto(v)
@@ -69,7 +68,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Answer": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		var err error
 		ent.Answer, err = base64.StdEncoding.DecodeString(v)
@@ -78,7 +77,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"OrigAnswer": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		var err error
 		ent.OrigAnswer, err = base64.StdEncoding.DecodeString(v)
@@ -87,7 +86,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"IsFiltered": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		b, err := strconv.ParseBool(v)
 		if err != nil {
@@ -99,7 +98,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Rule": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		ent.Result.Rule = v
 		return nil
@@ -107,7 +106,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"FilterID": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		i, err := strconv.Atoi(v)
 		if err != nil {
@@ -119,7 +118,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Reason": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		i, err := strconv.Atoi(v)
 		if err != nil {
@@ -131,7 +130,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"ServiceName": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		ent.Result.ServiceName = v
 		return nil
@@ -139,7 +138,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Upstream": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		ent.Upstream = v
 		return nil
@@ -147,7 +146,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Elapsed": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		i, err := strconv.Atoi(v)
 		if err != nil {
@@ -159,7 +158,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Question": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		var qstr []byte
 		qstr, err := base64.StdEncoding.DecodeString(v)
@@ -183,7 +182,7 @@ var logEntryHandlers = map[string](func(t json.Token, ent *logEntry) error){
 	"Time": func(t json.Token, ent *logEntry) error {
 		v, ok := t.(string)
 		if !ok {
-			return fmt.Errorf("json token wrong type")
+			return nil
 		}
 		var err error
 		ent.Time, err = time.Parse(time.RFC3339, v)
@@ -204,18 +203,15 @@ func decodeLogEntry(ent *logEntry, str string) {
 		}
 		key := keyToken.(string)
 		handler, ok := logEntryHandlers[key]
-		if !ok {
-			log.Debug("bad json key")
-			return
-		}
 		value, err := dec.Token()
 		if err != nil {
-			log.Debug("decodeLogEntry err: %s", err)
 			return
 		}
-		if err := handler(value, ent); err != nil {
-			log.Debug("decodeLogEntry err: %s", err)
-			return
+		if ok {
+			if err := handler(value, ent); err != nil {
+				log.Debug("decodeLogEntry err: %s", err)
+				return
+			}
 		}
 	}
 }
