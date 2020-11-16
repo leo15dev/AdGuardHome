@@ -234,7 +234,7 @@ func setupConfig(args options) {
 	}
 }
 
-// run performs configurating and starts the AdGuard Home.
+// run performs configurating and starts AdGuard Home.
 func run(args options) {
 	// configure config filename
 	initConfigFilename(args)
@@ -257,7 +257,7 @@ func run(args options) {
 
 	setupContext(args)
 
-	// 'clients' module uses 'dnsfilter' module's static data (dnsfilter.BlockedSvcKnown()),
+	// clients package uses dnsfilter package's static data (dnsfilter.BlockedSvcKnown()),
 	//  so we have to initialize dnsfilter's static data first,
 	//  but also avoid relying on automatic Go init() function
 	dnsfilter.InitModule()

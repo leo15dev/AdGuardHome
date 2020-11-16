@@ -379,8 +379,9 @@ func parseCookie(cookie string) string {
 	return ""
 }
 
-func optionalAuthThird(w http.ResponseWriter, r *http.Request) (returns bool) {
-	returns = false
+// optionalAuthThird return true if user should authenticate first.
+func optionalAuthThird(w http.ResponseWriter, r *http.Request) (authFirst bool) {
+	authFirst = false
 
 	// redirect to login page if not authenticated
 	ok := false
@@ -421,9 +422,9 @@ func optionalAuthThird(w http.ResponseWriter, r *http.Request) (returns bool) {
 			w.WriteHeader(http.StatusForbidden)
 			_, _ = w.Write([]byte("Forbidden"))
 		}
-		returns = true
+		authFirst = true
 	}
-	return
+	return authFirst
 }
 
 func optionalAuth(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {

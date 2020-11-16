@@ -546,12 +546,14 @@ func (f *Filtering) read(reader io.Reader, tmpFile *os.File, filter *filter) (in
 	}
 }
 
-func (f *Filtering) updateIntl(filter *filter) (bool, error) {
+// updateIntl returns true if filter update performed successfully.
+func (f *Filtering) updateIntl(filter *filter) (updated bool, err error) {
+	updated = false
 	log.Tracef("Downloading update for filter %d from %s", filter.ID, filter.URL)
 
 	tmpFile, err := ioutil.TempFile(filepath.Join(Context.getDataDir(), filterDir), "")
 	if err != nil {
-		return false, err
+		return updated, err
 	}
 	defer func() {
 		if tmpFile != nil {
@@ -570,7 +572,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	if filepath.IsAbs(filter.URL) {
 		f, err := os.Open(filter.URL)
 		if err != nil {
-			return false, fmt.Errorf("open file: %w", err)
+			return updated, fmt.Errorf("open file: %w", err)
 		}
 		defer f.Close()
 		reader = f
@@ -581,19 +583,19 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 		}
 		if err != nil {
 			log.Printf("Couldn't request filter from URL %s, skipping: %s", filter.URL, err)
-			return false, err
+			return updated, err
 		}
 
 		if resp.StatusCode != http.StatusOK {
 			log.Printf("Got status code %d from URL %s, skipping", resp.StatusCode, filter.URL)
-			return false, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
+			return updated, fmt.Errorf("got status code != 200: %d", resp.StatusCode)
 		}
 		reader = resp.Body
 	}
 
 	total, err := f.read(reader, tmpFile, filter)
 	if err != nil {
-		return false, err
+		return updated, err
 	}
 
 	// Extract filter name and count number of rules
@@ -602,7 +604,7 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	// Check if the filter has been really changed
 	if filter.checksum == checksum {
 		log.Tracef("Filter #%d at URL %s hasn't changed, not updating it", filter.ID, filter.URL)
-		return false, nil
+		return updated, nil
 	}
 
 	log.Printf("Filter %d has been updated: %d bytes, %d rules",
@@ -619,11 +621,12 @@ func (f *Filtering) updateIntl(filter *filter) (bool, error) {
 	_ = tmpFile.Close()
 	err = os.Rename(tmpFile.Name(), filterFilePath)
 	if err != nil {
-		return false, err
+		return updated, err
 	}
 	tmpFile = nil
+	updated = true
 
-	return true, nil
+	return updated, nil
 }
 
 // loads filter contents from the file in dataDir
