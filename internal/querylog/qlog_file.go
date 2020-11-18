@@ -69,7 +69,7 @@ func NewQLogFile(path string) (*QLogFile, error) {
 // * It returns the position of the the line with the timestamp we were looking for
 // so that when we call "ReadNext" this line was returned.
 // * Depth of the search (how many times we compared timestamps).
-// * If we could not find it, it returns ErrSeekNotFound
+// * If we could not find it, it returns one of the errors described above.
 func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 	q.lock.Lock()
 	defer q.lock.Unlock()

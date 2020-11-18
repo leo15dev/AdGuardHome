@@ -289,7 +289,7 @@ func TestQLogSeek(t *testing.T) {
 	assert.Equal(t, 1, depth)
 }
 
-func TestQLogSeek_ErrSeekTooLate(t *testing.T) {
+func TestQLogSeek_ErrTSTooLate(t *testing.T) {
 	testDir := prepareTestDir()
 	t.Cleanup(func() {
 		_ = os.RemoveAll(testDir)
@@ -318,7 +318,7 @@ func TestQLogSeek_ErrSeekTooLate(t *testing.T) {
 	assert.Equal(t, 2, depth)
 }
 
-func TestQLogSeek_ErrSeekTooEarly(t *testing.T) {
+func TestQLogSeek_ErrTSTooEarly(t *testing.T) {
 	testDir := prepareTestDir()
 	t.Cleanup(func() {
 		_ = os.RemoveAll(testDir)
