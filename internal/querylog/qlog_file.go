@@ -11,12 +11,12 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 )
 
-// ErrSeekNotFound is returned from Seek if when it fails to find the requested
-// record.
-const ErrSeekNotFound agherr.Error = "seek: record not found"
-
-// ErrEndOfLog is returned from Seek when the end of the current log is reached.
-const ErrEndOfLog agherr.Error = "seek: end of log"
+// Timestamp not found errors.
+const (
+	ErrTSNotFound agherr.Error = "ts not found"
+	ErrTSTooLate  agherr.Error = "ts too late"
+	ErrTSTooEarly agherr.Error = "ts too early"
+)
 
 // TODO: Find a way to grow buffer instead of relying on this value when reading strings
 const maxEntrySize = 16 * 1024
@@ -103,15 +103,18 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 		if err != nil {
 			return 0, depth, err
 		}
-		if lineIdx < start || lineEndIdx > end || lineIdx == lastProbeLineIdx {
+
+		if lineIdx == lastProbeLineIdx {
+			if lineIdx == 0 {
+				return 0, depth, ErrTSTooEarly
+			}
+
 			// If we're testing the same line twice then most likely
 			// the scope is too narrow and we won't find anything
 			// anymore in any other file.
-			return 0, depth, fmt.Errorf("couldn't find timestamp %v: %w", timestamp, ErrSeekNotFound)
-		} else if lineIdx == end && lineEndIdx == end {
-			// If both line beginning and line ending indices point
-			// at the end of the file, we apparently reached it.
-			return 0, depth, ErrEndOfLog
+			return 0, depth, fmt.Errorf("couldn't find timestamp %v: %w", timestamp, ErrTSNotFound)
+		} else if lineIdx == fileInfo.Size() {
+			return 0, depth, ErrTSTooLate
 		}
 
 		// Save the last found idx
@@ -121,7 +124,7 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 		ts := readQLogTimestamp(line)
 
 		if ts == 0 {
-			return 0, depth, fmt.Errorf("couldn't get timestamp: %w", ErrSeekNotFound)
+			return 0, depth, fmt.Errorf("couldn't get timestamp: %w", ErrTSNotFound)
 		}
 
 		if ts == timestamp {
@@ -143,7 +146,7 @@ func (q *QLogFile) Seek(timestamp int64) (int64, int, error) {
 
 		depth++
 		if depth >= 100 {
-			return 0, depth, fmt.Errorf("seek depth is too high, aborting. File %s, timestamp %v: %w", q.file.Name(), timestamp, ErrSeekNotFound)
+			return 0, depth, fmt.Errorf("seek depth is too high, aborting. File %s, timestamp %v: %w", q.file.Name(), timestamp, ErrTSNotFound)
 		}
 	}
 
